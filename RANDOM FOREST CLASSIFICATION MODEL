@@ -1,0 +1,140 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyOadYN9rRJ1cB8xpTYts673",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/aasthaa41/FRAUD-DETECTION-MODEL/blob/main/RANDOM%20FOREST%20CLASSIFICATION%20MODEL\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 2,
+      "metadata": {
+        "id": "cy0IesXrzQaO"
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "\n",
+        "# Load your dataset\n",
+        "# Replace 'your_dataset.csv' with the actual file path\n",
+        "df = pd.read_excel('/content/project1.xlsx')\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd\n",
+        "from sklearn.impute import SimpleImputer\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.preprocessing import StandardScaler\n",
+        "from sklearn.ensemble import RandomForestClassifier\n",
+        "from sklearn.metrics import accuracy_score, confusion_matrix, classification_report\n",
+        "\n",
+        "\n",
+        "# Separate features and target variable\n",
+        "X = df.drop(columns=['TARGET_VARIABLE'])\n",
+        "y = df['TARGET_VARIABLE']\n",
+        "\n",
+        "# Split the data into training and testing sets\n",
+        "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n",
+        "\n",
+        "# Identify numerical and categorical columns\n",
+        "numerical_cols = X.select_dtypes(include=['int64', 'float64']).columns\n",
+        "categorical_cols = X.select_dtypes(include=['object']).columns\n",
+        "\n",
+        "# Impute numerical columns with the mean\n",
+        "num_imputer = SimpleImputer(strategy='mean')\n",
+        "X_train[numerical_cols] = num_imputer.fit_transform(X_train[numerical_cols])\n",
+        "X_test[numerical_cols] = num_imputer.transform(X_test[numerical_cols])\n",
+        "\n",
+        "# Impute categorical columns with the most frequent value (mode)\n",
+        "cat_imputer = SimpleImputer(strategy='most_frequent')\n",
+        "X_train[categorical_cols] = cat_imputer.fit_transform(X_train[categorical_cols])\n",
+        "X_test[categorical_cols] = cat_imputer.transform(X_test[categorical_cols])\n",
+        "\n",
+        "# Convert categorical features to numerical format using one-hot encoding\n",
+        "X_train = pd.get_dummies(X_train, columns=categorical_cols, drop_first=True)\n",
+        "X_test = pd.get_dummies(X_test, columns=categorical_cols, drop_first=True)\n",
+        "\n",
+        "# Align the training and test sets (handle any columns that might be missing in the test set)\n",
+        "X_train, X_test = X_train.align(X_test, join='left', axis=1, fill_value=0)\n",
+        "\n",
+        "# Standardize the numerical features\n",
+        "scaler = StandardScaler()\n",
+        "X_train[numerical_cols] = scaler.fit_transform(X_train[numerical_cols])\n",
+        "X_test[numerical_cols] = scaler.transform(X_test[numerical_cols])\n",
+        "\n",
+        "# Initialize and train the Random Forest model\n",
+        "rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)\n",
+        "rf_classifier.fit(X_train, y_train)\n",
+        "\n",
+        "# Make predictions on the test data\n",
+        "y_pred = rf_classifier.predict(X_test)\n",
+        "\n",
+        "# Evaluate the model\n",
+        "accuracy = accuracy_score(y_test, y_pred)\n",
+        "print(f\"Accuracy: {accuracy:.2f}\")\n",
+        "\n",
+        "conf_matrix = confusion_matrix(y_test, y_pred)\n",
+        "print(\"Confusion Matrix:\")\n",
+        "print(conf_matrix)\n",
+        "\n",
+        "class_report = classification_report(y_test, y_pred)\n",
+        "print(\"Classification Report:\")\n",
+        "print(class_report)\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "PlPUV5-vENWL",
+        "outputId": "70c1e383-55f2-4720-ba8d-7b3092b7891c"
+      },
+      "execution_count": 33,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Accuracy: 0.97\n",
+            "Confusion Matrix:\n",
+            "[[    53   3572]\n",
+            " [    32 109564]]\n",
+            "Classification Report:\n",
+            "              precision    recall  f1-score   support\n",
+            "\n",
+            "        High       0.62      0.01      0.03      3625\n",
+            "         Low       0.97      1.00      0.98    109596\n",
+            "\n",
+            "    accuracy                           0.97    113221\n",
+            "   macro avg       0.80      0.51      0.51    113221\n",
+            "weighted avg       0.96      0.97      0.95    113221\n",
+            "\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
